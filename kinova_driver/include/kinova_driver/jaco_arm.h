@@ -22,7 +22,11 @@
 #include <kinova_msgs/Stop.h>
 #include <kinova_msgs/Start.h>
 #include <kinova_msgs/HomeArm.h>
+
 #include <kinova_msgs/JointVelocity.h>
+
+#include <sensor_msgs/JointState.h>
+
 #include <kinova_msgs/FingerPosition.h>
 #include <kinova_msgs/JointAngles.h>
 #include <kinova_msgs/SetForceControlParams.h>
@@ -49,9 +53,11 @@ class JacoArm
     JacoArm(JacoComm& arm, const ros::NodeHandle &node_handle);
     ~JacoArm();
 
-    void jointVelocityCallback(const kinova_msgs::JointVelocityConstPtr& joint_vel);
+    void jointVelocityCallback(const kinova_msgs::JointVelocityConstPtr& joint_vel);    
     void cartesianVelocityCallback(const geometry_msgs::TwistStampedConstPtr& cartesian_vel);
-
+    
+    void jointCommandCallback(const sensor_msgs::JointStateConstPtr& joint_cmd);
+    
     bool stopServiceCallback(kinova_msgs::Stop::Request &req, kinova_msgs::Stop::Response &res);
     bool startServiceCallback(kinova_msgs::Start::Request &req, kinova_msgs::Start::Response &res);
     bool homeArmServiceCallback(kinova_msgs::HomeArm::Request &req, kinova_msgs::HomeArm::Response &res);
@@ -71,6 +77,7 @@ class JacoArm
     void cartesianVelocityTimer(const ros::TimerEvent&);
     void jointVelocityTimer(const ros::TimerEvent&);
     void statusTimer(const ros::TimerEvent&);
+    void jointCommandTimer(const ros::TimerEvent&);
 
     void publishJointAngles(void);
     void publishToolPosition(void);
@@ -84,6 +91,7 @@ class JacoArm
     // Publishers, subscribers, services
     ros::Subscriber joint_velocity_subscriber_;
     ros::Subscriber cartesian_velocity_subscriber_;
+    ros::Subscriber joint_command_subscriber_; // 
 
     ros::Publisher joint_angles_publisher_;
     ros::Publisher tool_position_publisher_;
@@ -105,13 +113,17 @@ class JacoArm
     ros::Timer status_timer_;
     ros::Timer cartesian_vel_timer_;
     ros::Timer joint_vel_timer_;
+    ros::Timer joint_command_timer_;  // 
 
     // Parameters
     double status_interval_seconds_;
     double joint_vel_timeout_seconds_;
     double cartesian_vel_timeout_seconds_;
     double joint_vel_interval_seconds_;
-    double cartesian_vel_interval_seconds_;
+    double cartesian_vel_interval_seconds_;    
+	double joint_command_timeout_seconds_;   //
+	double joint_command_interval_seconds_;  // 
+    
     std::string tf_prefix_;
     double finger_conv_ratio_;
     bool convert_joint_velocities_;
@@ -119,14 +131,21 @@ class JacoArm
     // State tracking or utility members
     bool cartesian_vel_timer_flag_;
     bool joint_vel_timer_flag_;
+    bool joint_command_timer_flag_; // 
 
     AngularInfo joint_velocities_;
     CartesianInfo cartesian_velocities_;
+    AngularInfo joint_positions_;
+    //JacoAngles joint_angles_;
 
     ros::Time last_joint_vel_cmd_time_;
     ros::Time last_cartesian_vel_cmd_time_;
+    ros::Time last_joint_command_cmd_time_;
 
     std::vector< std::string > joint_names_;
+        
+    sensor_msgs::JointState joint_states_;
+    double Kp_;
 };
 
 }  // namespace kinova

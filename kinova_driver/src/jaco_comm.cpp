@@ -122,24 +122,23 @@ JacoComm::JacoComm(const ros::NodeHandle& node_handle,
             getQuickStatus(quick_status);
 
             robot_type_ = quick_status.RobotType;
-            if ((robot_type_ != 0) && (robot_type_ != 1) && (robot_type_ != 3))
-            {
-                ROS_ERROR("Could not get the type of the arm from the quick status, expected "
-                          "either type 0 (JACO), or type 1 (MICO), got %d", quick_status.RobotType);
-                throw JacoCommException("Could not get the type of the arm", quick_status.RobotType);
-            }
-
             switch (robot_type_) {
                 case 0:
                 case 3:
+                case 4:
+                case 6:
                     num_fingers_ = 3;
                     break;
                 case 1:
+                case 2:
+                case 5:
                     num_fingers_ = 2;
                     break;
                 default:
+                    ROS_ERROR("Unknown robot type: %d", quick_status.RobotType);
+                    throw JacoCommException("Could not recognize the type of the arm", quick_status.RobotType);
                     break;
-            }
+            };
 
             ROS_INFO_STREAM("Found " << devices_count << " device(s), using device at index " << device_i
                             << " (model: " << configuration.Model
@@ -273,7 +272,8 @@ void JacoComm::initFingers(void)
  *
  * Waits until the arm has stopped moving before releasing control of the API.
  */
-void JacoComm::setJointAngles(const JacoAngles &angles, int timeout, bool push)
+// void JacoComm::setJointAngles(const JacoAngles &angles, int timeout, bool push)
+void JacoComm::setJointAngles(const AngularInfo &angles, int timeout, bool push)
 {
     boost::recursive_mutex::scoped_lock lock(api_mutex_);
 
@@ -308,6 +308,8 @@ void JacoComm::setJointAngles(const JacoAngles &angles, int timeout, bool push)
     jaco_position.Position.Delay = 0.0;
     jaco_position.Position.Type = ANGULAR_POSITION;
     jaco_position.Position.Actuators = angles;
+    
+    ROS_INFO(" ANGLES :  ");
 
     result = jaco_api_.sendAdvanceTrajectory(jaco_position);
     if (result != NO_ERROR_KINOVA)
@@ -464,15 +466,27 @@ void JacoComm::setJointVelocities(const AngularInfo &joint_vel)
 
     //startAPI();
     jaco_velocity.Position.Type = ANGULAR_VELOCITY;
-
+     
     // confusingly, velocity is passed in the position struct
     jaco_velocity.Position.Actuators = joint_vel;
-
+    
+    // int result = jaco_api_.sendBasicTrajectory(jaco_velocity);
     int result = jaco_api_.sendAdvanceTrajectory(jaco_velocity);
+    
+    /* ROS_INFO("jaco_velocity.Position.Actuators 1:%5.2f 2:5.2f 3:5.2f 4:5.2f 5:5.2f 6:5.2f", 
+		jaco_velocity.Position.Actuators.Actuator1,
+		jaco_velocity.Position.Actuators.Actuator2,
+		jaco_velocity.Position.Actuators.Actuator3,
+		jaco_velocity.Position.Actuators.Actuator4,
+		jaco_velocity.Position.Actuators.Actuator5,
+		jaco_velocity.Position.Actuators.Actuator6);
+    */
+    
     if (result != NO_ERROR_KINOVA)
     {
         throw JacoCommException("Could not send advanced joint velocity trajectory", result);
     }
+            
 }
 
 
@@ -781,12 +795,12 @@ void JacoComm::startAPI()
 }
 
 
-int JacoComm::numFingers()
+int JacoComm::numFingers() const
 {
     return num_fingers_;
 }
 
-int JacoComm::robotType()
+int JacoComm::robotType() const
 {
     return robot_type_;
 }
@@ -857,5 +871,10 @@ bool JacoComm::isStopped()
     return is_software_stop_;
 }
 
+double JacoComm::j6o() const
+{
+    // J6 offset is 260 for Jaco R1 (type 0), and 270 for Mico and Jaco R2.
+    return robotType() == 0 ? 260.0 : 270.0;
+}
 
 }  // namespace kinova

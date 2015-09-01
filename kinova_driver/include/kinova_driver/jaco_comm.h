@@ -68,7 +68,8 @@ class JacoComm
     bool isHomed(void);
     void homeArm(void);
     void initFingers(void);
-    void setJointAngles(const JacoAngles &angles, int timeout = 0, bool push = true);
+    //void setJointAngles(const JacoAngles &angles, int timeout = 0, bool push = true);
+    void setJointAngles(const AngularInfo& angles, int timeout = 0, bool push = true);
     void setCartesianPosition(const JacoPose &position, int timeout = 0, bool push = true);
     void setFingerPositions(const FingerAngles &fingers, int timeout = 0, bool push = true);
     void setJointVelocities(const AngularInfo& joint_vel);
@@ -93,8 +94,10 @@ class JacoComm
     void stopAPI();
     void startAPI();
     bool isStopped();
-    int numFingers();
-    int robotType();
+    int numFingers() const;
+    int robotType() const;
+
+    double j6o() const; // Joint 6 offset (second wrist part) that differs between models.
 
     void setEndEffectorOffset(float x, float y, float z);
 
