@@ -98,6 +98,7 @@ class JacoArm
     ros::Publisher tool_wrench_publisher_;
     ros::Publisher finger_position_publisher_;
     ros::Publisher joint_state_publisher_;
+    ros::Publisher joint_states_publisher_;  // two joint_state sets, to reduce code 
 
     ros::ServiceServer stop_service_;
     ros::ServiceServer start_service_;

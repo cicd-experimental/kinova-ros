@@ -71,6 +71,7 @@ JacoArm::JacoArm(JacoComm &arm, const ros::NodeHandle &nodeHandle)
     tool_position_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped>("out/tool_position", 2);
     tool_wrench_publisher_ = node_handle_.advertise<geometry_msgs::WrenchStamped>("out/tool_wrench", 2);
     finger_position_publisher_ = node_handle_.advertise<kinova_msgs::FingerPosition>("out/finger_position", 2);
+    joint_states_publisher_ = node_handle_.advertise<sensor_msgs::JointState>("/joint_states", 2);
 
     /* Set up Subscribers*/
     joint_velocity_subscriber_ = node_handle_.subscribe("in/joint_velocity", 1,
@@ -237,8 +238,7 @@ void JacoArm::jointCommandCallback(const sensor_msgs::JointStateConstPtr& joint_
     // for (int i = 0; i < joint_cmd->name.size(); i++)
 
     if (!jaco_comm_.isStopped())
-    {
-		// double Kp_ = 2.0; 		
+    {			
 		double spin1 = -1.0;  // Adapt to urdf joint rotation sense (could be done in the urdf itself?)
 		double spin2 = 1.0;
 		double spin3 = -1.0;
@@ -560,6 +560,7 @@ void JacoArm::publishJointAngles(void)
 
     joint_angles_publisher_.publish(jaco_angles);
     joint_state_publisher_.publish(joint_state);
+    joint_states_publisher_.publish(joint_state);
     
     // Store joint_states in global vble for pos-vel controller
     joint_states_ = joint_state;
