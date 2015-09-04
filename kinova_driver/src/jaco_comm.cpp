@@ -132,7 +132,11 @@ JacoComm::JacoComm(const ros::NodeHandle& node_handle,
                 case 1:
                 case 2:
                 case 5:
-                    num_fingers_ = 2;
+                    // TODO this was so when Jaco had always 3fg and mico always 2fg 
+                    // TODO change to param
+                    // num_fingers_ = 2;
+                    num_fingers_ = 3;                    
+                    ROS_INFO("num_fingers: %d", num_fingers_);
                     break;
                 default:
                     ROS_ERROR("Unknown robot type: %d", quick_status.RobotType);
