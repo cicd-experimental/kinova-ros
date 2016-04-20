@@ -237,16 +237,17 @@ void JacoArm::jointCommandCallback(const sensor_msgs::JointStateConstPtr& joint_
     //actually send the commands to the joints
     // for (int i = 0; i < joint_cmd->name.size(); i++)
 
+    //ROS_INFO("jointCommandCallback pos=%d vel=%d eff=%d", joint_cmd->position.size(), joint_cmd->velocity.size(), joint_cmd->effort.size() );
+
     if (!jaco_comm_.isStopped())
     {			
-		double spin1 = -1.0;  // Adapt to urdf joint rotation sense (could be done in the urdf itself?)
-		double spin2 = 1.0;
-		double spin3 = -1.0;
-		double spin4 = -1.0;
-		double spin5 = -1.0;
-		double spin6 = -1.0;
-		joint_velocities_.Actuator1 = spin1 * (joint_cmd->velocity[0] / M_PI * 180.0 + Kp_ * (joint_cmd->position[0] - joint_states_.position[0]));			         
-        joint_velocities_.Actuator2 = spin2 * (joint_cmd->velocity[1] / M_PI * 180.0 + Kp_ * (joint_cmd->position[1] - joint_states_.position[1]));
+	double spin1 = -1.0;  // Adapt to urdf joint rotation sense (could be done in the urdf itself?)
+	double spin2 = 1.0;
+	double spin3 = -1.0;
+	double spin4 = -1.0;
+	double spin5 = -1.0;
+        double spin6 = -1.0;
+	joint_velocities_.Actuator1 = spin1 * (joint_cmd->velocity[0] / M_PI * 180.0 + Kp_ * (joint_cmd->position[0] - joint_states_.position[0]));			        joint_velocities_.Actuator2 = spin2 * (joint_cmd->velocity[1] / M_PI * 180.0 + Kp_ * (joint_cmd->position[1] - joint_states_.position[1]));
         joint_velocities_.Actuator3 = spin3 * (joint_cmd->velocity[2] / M_PI * 180.0 + Kp_ * (joint_cmd->position[2] - joint_states_.position[2]));
         joint_velocities_.Actuator4 = spin4 * (joint_cmd->velocity[3] / M_PI * 180.0 + Kp_ * (joint_cmd->position[3] - joint_states_.position[3]));
         joint_velocities_.Actuator5 = spin5 * (joint_cmd->velocity[4] / M_PI * 180.0 + Kp_ * (joint_cmd->position[4] - joint_states_.position[4]));
