@@ -12,6 +12,7 @@
   <rosparam command="load" file="$(find kinova_pad)/launch/ps3.yaml" />
   <param name="kinova_joy" value="/joy"/>
   <node name="kinova_pad" pkg="kinova_pad" type="kinova_pad" output="screen">
+       <param name="robot" type="string" value="jaco"/>
   </node>
   
 </launch>
