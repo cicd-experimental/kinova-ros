@@ -224,6 +224,7 @@ bool JacoComm::isHomed(void)
  * Fingers are homed by manually opening them fully, then returning them to a
  * half-open position.
  */
+/*
 void JacoComm::homeArm(void)
 {
     boost::recursive_mutex::scoped_lock lock(api_mutex_);
@@ -250,6 +251,54 @@ void JacoComm::homeArm(void)
         throw JacoCommException("Move home failed", result);
     }
 }
+*/
+
+void JacoComm::homeArm(void)
+{
+    boost::recursive_mutex::scoped_lock lock(api_mutex_);
+
+    if (isStopped())
+    {
+        ROS_INFO("Arm is stopped, cannot home");
+        return;
+    }
+    else if (isHomed())
+    {
+        ROS_INFO("Arm is already in \"home\" position");
+        return;
+    }
+
+    stopAPI();
+    ros::Duration(1.0).sleep();
+    startAPI();
+
+    ROS_INFO("Homing the arm");
+
+    JoystickCommand mycommand;
+    mycommand.InitStruct();
+    // In api mapping(observing with Jacosoft), home button is ButtonValue[2].
+    mycommand.ButtonValue[2] = 1;
+    for(int i = 0; i<2000; i++)
+    {
+        jaco_api_.sendJoystickCommand(mycommand);
+        usleep(5000);
+
+        // if (myhome.isCloseToOther(KinovaAngles(currentAngles.Actuators), angle_tolerance))
+        if(isHomed())
+        {
+            ROS_INFO(" haha Arm is in \"home\" position");
+            // release home button.
+            mycommand.ButtonValue[2] = 0;
+            jaco_api_.sendJoystickCommand(mycommand);
+            return;
+        }
+    }
+
+    mycommand.ButtonValue[2] = 0;
+    jaco_api_.sendJoystickCommand(mycommand);
+    ROS_WARN("Homing arm timer out! If the arm is not in home position yet, please re-run home arm.");
+}
+
 
 
 /*!
