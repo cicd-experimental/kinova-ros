@@ -186,9 +186,9 @@ KinovaPad::KinovaPad() : pnh_("~")
 	}
 
  	 // Listen through the node handle sensor_msgs::Joy messages from joystick
-	joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &KinovaPad::joyCallback, this);
+	joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 1, &KinovaPad::joyCallback, this);
 	
-	finger_sub_ = nh_.subscribe<kinova_msgs::FingerPosition>(robot_node_ + "/out/finger_position", 10, &KinovaPad::fingerCallback, this);	
+	finger_sub_ = nh_.subscribe<kinova_msgs::FingerPosition>(robot_node_ + "/out/finger_position", 1, &KinovaPad::fingerCallback, this);	
 
 	// Request service to send commands to the arm
 	arm_fold_client = nh_.serviceClient<kinova_msgs::HomeArm>(robot_node_ + "/in/home_arm");
@@ -224,7 +224,6 @@ void KinovaPad::fingerCallback(const kinova_msgs::FingerPosition::ConstPtr& fing
 
 void KinovaPad::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
-
 	int32_t gripper_ref = 0;
 	bool gripper_event = false;
 	
