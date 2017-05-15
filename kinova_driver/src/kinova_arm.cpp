@@ -49,6 +49,8 @@ namespace kinova
 KinovaArm::KinovaArm(KinovaComm &arm, const ros::NodeHandle &nodeHandle, const std::string &kinova_robotType)
     : kinova_comm_(arm), node_handle_(nodeHandle), kinova_robotType_(kinova_robotType)
 {
+    // nodeHandle is created by kinova_arm_driver and is private
+
     /* Set up parameters for different robot type */
     // example for a kinova_robotType: j2n6s300
 
@@ -60,6 +62,8 @@ KinovaArm::KinovaArm(KinovaComm &arm, const ros::NodeHandle &nodeHandle, const s
 
 //    tf_prefix_ = kinova_robotType_ + "_" + boost::lexical_cast<string>(same_type_index); // in case of multiple same_type robots
     tf_prefix_ = kinova_robotType_ + "_";
+
+    node_handle_.param<std::string>("tf_prefix_", tf_prefix_, tf_prefix_); // can be misleading: it is not a tf_prefix at it's traditional TF sense, but a prefix for the joints and link // can be misleading: it is not a tf_prefix at it's traditional TF sense, but a prefix for the joints and linkss
 
     // Maximum number of joints on Kinova-like robots:
     robot_category_ = kinova_robotType_[0];

@@ -70,6 +70,8 @@ KinovaPoseActionServer::KinovaPoseActionServer(KinovaComm &arm_comm, const ros::
 
     //    tf_prefix_ = kinova_robotType_ + "_" + boost::lexical_cast<string>(same_type_index); // in case of multiple same_type robots
     tf_prefix_ = kinova_robotType_ + "_";
+    
+    node_handle_.param<std::string>("tf_prefix_", tf_prefix_, tf_prefix_); // can be misleading: it is not a tf_prefix at it's traditional TF sense, but a prefix for the joints and link // can be misleading: it is not a tf_prefix at it's traditional TF sense, but a prefix for the joints and linkss
 
     position_tolerance_ = static_cast<float>(position_tolerance);
     EulerAngle_tolerance_ = static_cast<float>(EulerAngle_tolerance);

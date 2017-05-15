@@ -46,6 +46,8 @@ KinovaKinematics::KinovaKinematics(const ros::NodeHandle &node_handle, std::stri
 
 //    tf_prefix_ = kinova_robotType_ + "_" + boost::lexical_cast<string>(same_type_index); // in case of multiple same_type robots
     tf_prefix_ = kinova_robotType_ + "_";
+    
+    node_handle.param<std::string>("tf_prefix_", tf_prefix_, tf_prefix_); // can be misleading: it is not a tf_prefix at it's traditional TF sense, but a prefix for the joints and link // can be misleading: it is not a tf_prefix at it's traditional TF sense, but a prefix for the joints and linkss
 
     // Maximum number of joints on Kinova-like robots:
     robot_category_ = kinova_robotType_[0];

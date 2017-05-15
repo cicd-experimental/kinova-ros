@@ -473,6 +473,7 @@ int main(int argc, char** argv)
 
 //    tf_prefix_ = kinova_robotType_ + "_" + boost::lexical_cast<string>(same_type_index); // in case of multiple same_type robots
     tf_prefix_ = kinova_robotType_;
+    
 
     // Maximum number of joints on Kinova-like robots:
     robot_category_ = kinova_robotType_[0];
@@ -483,8 +484,10 @@ int main(int argc, char** argv)
     finger_number_ = kinova_robotType_[5]-'0';
     joint_total_number_ = arm_joint_number_ + finger_number_;
 
-    ros::init(argc, argv, tf_prefix_+"_interactive_control");
+    ros::init(argc, argv, "interactive_control");
     ros::NodeHandle nh("~");
+    
+    nh.param<std::string>("tf_prefix_", tf_prefix_, tf_prefix_); // can be misleading: it is not a tf_prefix at it's traditional TF sense, but a prefix for the joints and link // can be misleading: it is not a tf_prefix at it's traditional TF sense, but a prefix for the joints and linkss
     ros::Subscriber armJoint_sub = nh.subscribe("/"+tf_prefix_+"_driver/out/joint_command", 1, &currentJointsFeedback);
     ros::Subscriber armCartesian_sub = nh.subscribe("/"+tf_prefix_+"_driver/out/cartesian_command", 1, &currentPoseFeedback);
 
