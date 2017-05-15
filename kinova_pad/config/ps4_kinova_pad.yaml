@@ -1,0 +1,20 @@
+kinova_pad:
+   num_of_buttons: 7
+   button_up: 3 
+   button_down: 1
+   button_select: 8 # share button in ps4, to select cartesian or joint by joint
+   button_fold: 12  # PS, to home
+   button_open: 2 # circle, to open hand
+   button_close: 0 # square, to close hand
+   dead_man_arm: 4 # l1
+   button_euler: 6 # l2
+   button_gripper: 7 # r2, to select 2 or 3 finger mode
+   axis_linear_x: 1 # left joystick, vertical
+   axis_linear_y: 0 # left joystick, horizontal
+   axis_linear_z: 5 # right joystick, vertical
+   axis_angular_x: 1 # left joystick, vertical
+   axis_angular_y: 0 # left joystick, horizontal 
+   axis_angular_z: 5 # right joystick, vertical  
+   scale_linear: 0.20
+   scale_angular: 0.20
+   scale_joint: 10.0

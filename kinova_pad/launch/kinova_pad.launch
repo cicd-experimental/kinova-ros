@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+
+ <!-- joy node -->
+  <node name="joy_kinova" pkg="joy" type="joy_node" respawn="true">
+    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="deadzone" value="0.12" />
+    <param name="autorepeat_rate" value="100.0" type="double" />
+    <param name="coalesce_interval" value="0.01" type="double" />
+  </node>
+
+  <!-- Parameters -->
+  <rosparam command="load" file="$(find kinova_pad)/config/ps4_kinova_pad.yaml" />
+  <param name="kinova_joy" value="/joy"/>
+  <node name="kinova_pad" pkg="kinova_pad" type="kinova_pad" output="screen">
+       <param name="robot_base_link" type="string" value="arm_base_link"/>
+       <param name="robot_node" type="string" value="arm_driver"/>
+  </node>
+  
+</launch>
