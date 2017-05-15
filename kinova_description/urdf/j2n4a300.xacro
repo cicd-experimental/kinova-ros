@@ -19,7 +19,7 @@
     <xacro:include filename="$(find kinova_description)/urdf/kinova_common.xacro" />
     <xacro:include filename="$(find kinova_description)/urdf/kinova_finger_set.xacro" />
 
-    <property name="prefix" value="j2n4a300" />
+    <property name="prefix" value="arm" />
 
     <property name="link_base" value="${prefix}_link_base" />
     <property name="link_1" value="${prefix}_link_1" />
