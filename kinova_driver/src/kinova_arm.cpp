@@ -41,6 +41,13 @@ namespace
         convertKinDeg(qds.y);
         convertKinDeg(qds.z);
     }
+
+    inline double radnorm( double value ) 
+    {
+        while (value > M_PI) value -= 2.0*M_PI;
+        while (value < -M_PI) value += 2.0*M_PI;
+        return value;
+    }
 }
 
 namespace kinova
@@ -332,26 +339,26 @@ void KinovaArm::publishJointAngles(void)
 
     // Transform from Kinova DH algorithm to physical angles in radians, then place into vector array
     joint_state.position.resize(joint_total_number_);
-    joint_state.position[0] = kinova_angles.joint1 * M_PI/180;
-    joint_state.position[1] = kinova_angles.joint2 * M_PI/180;
-    joint_state.position[2] = kinova_angles.joint3 * M_PI/180;
-    joint_state.position[3] = kinova_angles.joint4 * M_PI/180;
+    joint_state.position[0] = radnorm(kinova_angles.joint1 * M_PI/180 + M_PI);
+    joint_state.position[1] = radnorm(kinova_angles.joint2 * M_PI/180);
+    joint_state.position[2] = radnorm(kinova_angles.joint3 * M_PI/180 - M_PI);
+    joint_state.position[3] = radnorm(kinova_angles.joint4 * M_PI/180 + M_PI);
     if (arm_joint_number_ == 6)
     {
-        joint_state.position[4] = kinova_angles.joint5 * M_PI/180;
-        joint_state.position[5] = kinova_angles.joint6 * M_PI/180;
+        joint_state.position[4] = radnorm(kinova_angles.joint5 * M_PI/180 - M_PI);
+        joint_state.position[5] = radnorm(kinova_angles.joint6 * M_PI/180 - M_PI);
     }
 
     if(finger_number_==2)
     {
-        joint_state.position[joint_total_number_-2] = 0;
-        joint_state.position[joint_total_number_-1] = 0;
+        joint_state.position[joint_total_number_-2] = fingers.Finger1/6800*80*M_PI/180;
+        joint_state.position[joint_total_number_-1] = fingers.Finger2/6800*80*M_PI/180;
     }
     else if(finger_number_==3)
     {
-        joint_state.position[joint_total_number_-3] = 0;
-        joint_state.position[joint_total_number_-2] = 0;
-        joint_state.position[joint_total_number_-1] = 0;
+        joint_state.position[joint_total_number_-3] = fingers.Finger2/6800*80*M_PI/180;
+        joint_state.position[joint_total_number_-2] = fingers.Finger1/6800*80*M_PI/180; //XXX are Finger 1 and 2 switched???
+        joint_state.position[joint_total_number_-1] = fingers.Finger3/6800*80*M_PI/180;
     }
 
 
