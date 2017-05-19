@@ -16,7 +16,7 @@
 	xmlns:xacro="http://ros.org/wiki/xacro">
 
 
-    <property name="J_PI" value="3.1415926535897931" />
+    <xacro:property name="J_PI" value="3.1415926535897931" />
 
     <xacro:macro name="kinova_armlink" params="link_name link_mesh">
         <link name="${link_name}">
