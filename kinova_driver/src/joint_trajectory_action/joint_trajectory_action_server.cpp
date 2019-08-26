@@ -9,14 +9,14 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
     std::string robot_type = "";
     std::string address;
 
-    address = "/" + robot_name + "_driver/robot_type";
+    address = robot_name + "_driver/robot_type";
     nh_.getParam(address,robot_type);
     if (robot_type == "")
     {
         ROS_ERROR_STREAM("Parameter "<<address<<" not found, make sure robot driver node is running");
     }
 
-    address = "/" + robot_name + "/follow_joint_trajectory";
+    address = robot_name + "/follow_joint_trajectory";
     action_server_follow_.reset(
                 new FJTAS(nh_, address,
                           boost::bind(&JointTrajectoryActionController::goalCBFollow, this, _1),
@@ -49,8 +49,8 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
 
 
     pub_controller_command_ = nh_.advertise<trajectory_msgs::JointTrajectory>
-            ("/"+ robot_name + "_driver/trajectory_controller/command", 1);
-    sub_controller_state_ = nh_.subscribe("/" + robot_name + "_driver/trajectory_controller/state",
+            (robot_name + "_driver/trajectory_controller/command", 1);
+    sub_controller_state_ = nh_.subscribe(robot_name + "_driver/trajectory_controller/state",
             1, &JointTrajectoryActionController::controllerStateCB, this);
     watchdog_timer_ = nh_.createTimer(ros::Duration(1.0),
                                       &JointTrajectoryActionController::watchdog, this);

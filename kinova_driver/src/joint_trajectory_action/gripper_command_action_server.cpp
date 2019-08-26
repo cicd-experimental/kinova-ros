@@ -10,14 +10,14 @@ GripperCommandActionController::GripperCommandActionController(ros::NodeHandle &
     has_active_goal_(false)
 {    
     std::string address;
-    address = "/" + robot_name + "_gripper/gripper_command";
+    address = robot_name + "_gripper/gripper_command";
 
     action_server_gripper_command_.reset(
                 new GCAS(nh_, address, boost::bind(
                              &GripperCommandActionController::goalCBFollow, this, _1),
                          boost::bind(&GripperCommandActionController::cancelCBFollow,
                                      this, _1), false));
-    address = "/" + robot_name + "_driver/fingers_action/finger_positions";
+    address = robot_name + "_driver/fingers_action/finger_positions";
     action_client_set_finger_.reset(new SFPAC(nh_, address));
 
     ros::NodeHandle pn("~");
@@ -34,7 +34,7 @@ GripperCommandActionController::GripperCommandActionController(ros::NodeHandle &
         gripper_joint_names_[i] = "joint_finger_" + boost::lexical_cast<std::string>(i+1);
     }
 
-    address = "/" + robot_name + "_driver/out/finger_position";
+    address = robot_name + "_driver/out/finger_position";
     sub_fingers_state_ = nh_.subscribe(address, 1, &GripperCommandActionController::controllerStateCB, this);
 
 
