@@ -92,6 +92,15 @@ install(TARGETS gripper_command_action_server
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 add_dependencies(gripper_command_action_server ${catkin_EXPORTED_TARGETS})
 
+add_executable(joint_trajectory_action_server_with_torso
+  src/joint_trajectory_action/joint_trajectory_action_server_with_torso.cpp
+  include/kinova_driver/joint_trajectory_action_server_with_torso.h)
+target_link_libraries(joint_trajectory_action_server_with_torso 
+  ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${kinova_driver_LIBRARIES})
+install(TARGETS joint_trajectory_action_server_with_torso 
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+add_dependencies(joint_trajectory_action_server_with_torso ${catkin_EXPORTED_TARGETS})
+
 add_executable(kinova_tf_updater
   src/kinova_ros_types.cpp
   src/nodes/kinova_tf_updater.cpp

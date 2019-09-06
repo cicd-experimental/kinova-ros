@@ -1,4 +1,4 @@
-#include <kinova_driver/joint_trajectory_action_server.h>
+#include <kinova_driver/joint_trajectory_action_server_with_torso.h>
 
 using namespace kinova;
 
@@ -15,20 +15,16 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
     ROS_ERROR_STREAM("Parameter " << address << " not found, make sure robot driver node is running");
   }
 
-  address = robot_name + "/follow_joint_trajectory";
+  address = robot_name + "_with_torso/follow_joint_trajectory";
   action_server_follow_.reset(
       new FJTAS(nh_, address, boost::bind(&JointTrajectoryActionController::goalCBFollow, this, _1),
                 boost::bind(&JointTrajectoryActionController::cancelCBFollow, this, _1), false));
 
   ros::NodeHandle pn("~");
 
-  int arm_joint_num = robot_type[3] - '0';
-  joint_names_.resize(arm_joint_num);
+  joint_names_.resize(1);
 
-  for (uint i = 0; i < joint_names_.size(); i++)
-  {
-    joint_names_[i] = robot_name + "_joint_" + boost::lexical_cast<std::string>(i + 1);
-  }
+  joint_names_[0] = "torso_slider_joint";
 
   pn.param("constraints/goal_time", goal_time_constraint_, 0.0);
   // Gets the constraints for each joint.
@@ -44,10 +40,8 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
 
   pn.param("constraints/stopped_velocity_tolerance", stopped_velocity_tolerance_, 0.01);
 
-  pub_controller_command_ =
-      nh_.advertise<trajectory_msgs::JointTrajectory>(robot_name + "_driver/trajectory_controller/command", 1);
-  sub_controller_state_ = nh_.subscribe(robot_name + "_driver/trajectory_controller/state", 1,
-                                        &JointTrajectoryActionController::controllerStateCB, this);
+  pub_controller_command_ = nh_.advertise<trajectory_msgs::JointTrajectory>("torso_controllers/joint_trajectory", 1);
+  sub_controller_state_ = nh_.subscribe("joint_states", 10, &JointTrajectoryActionController::controllerStateCB, this);
   watchdog_timer_ = nh_.createTimer(ros::Duration(1.0), &JointTrajectoryActionController::watchdog, this);
 
   ros::Time started_waiting_for_controller = ros::Time::now();
@@ -58,7 +52,7 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
         ros::Time::now() > started_waiting_for_controller + ros::Duration(30.0))
     {
       ROS_WARN("Waited for the controller for 30 seconds, but it never showed up. Continue waiting the feedback of "
-               "trajectory state on topic /trajectory_controller/state ...");
+               "trajectory state on topic /rb1/joint_states ...");
       started_waiting_for_controller = ros::Time(0);
     }
     ros::WallDuration(0.1).sleep();
@@ -131,7 +125,7 @@ void JointTrajectoryActionController::watchdog(const ros::TimerEvent& e)
 
 void JointTrajectoryActionController::goalCBFollow(FJTAS::GoalHandle gh)
 {
-  ROS_INFO("Joint_trajectory_action_server received goal!");
+  ROS_INFO("Joint_trajectory_action_server_with_torso received goal!");
 
   // Ensures that the joints in the goal match the joints we are commanding.
   if (!setsEqual(joint_names_, gh.getGoal()->trajectory.joint_names))
@@ -158,12 +152,12 @@ void JointTrajectoryActionController::goalCBFollow(FJTAS::GoalHandle gh)
   active_goal_ = gh;
   has_active_goal_ = true;
   first_fb_ = true;
-  ROS_INFO("Joint_trajectory_action_server accepted goal!");
+  ROS_INFO("Joint_trajectory_action_server_with_torso accepted goal!");
 
   // Sends the trajectory along to the controller
   current_traj_ = active_goal_.getGoal()->trajectory;
   pub_controller_command_.publish(current_traj_);
-  ROS_INFO("Joint_trajectory_action_server published goal via command publisher!");
+  ROS_INFO("Joint_trajectory_action_server_with_torso published goal via command publisher!");
 }
 
 void JointTrajectoryActionController::cancelCBFollow(FJTAS::GoalHandle gh)
@@ -181,12 +175,27 @@ void JointTrajectoryActionController::cancelCBFollow(FJTAS::GoalHandle gh)
   }
 }
 
-void JointTrajectoryActionController::controllerStateCB(const control_msgs::FollowJointTrajectoryFeedbackConstPtr& msg)
+void JointTrajectoryActionController::controllerStateCB(const sensor_msgs::JointStateConstPtr& msg)
 {
-  ROS_INFO_ONCE("Joint_trajectory_action_server receive feedback of trajectory state from topic: "
-                "/trajectory_controller/state");
+  ROS_INFO_ONCE("Joint_trajectory_action_server_with_torso receive feedback of trajectory state from topic: "
+                "/rb1/joint_states");
 
-  last_controller_state_ = msg;
+  int actual;
+  bool found = false;
+
+  for (int i = 0; i < msg->name.size(); i++)
+  {
+    if (msg->name[i] == "torso_slider_joint")
+    {
+      actual = i;
+      last_controller_state_ = msg;
+      found = true;
+      break;
+    }
+  }
+
+  if (!found)
+    return;
 
   ros::Time now = ros::Time::now();
 
@@ -208,7 +217,7 @@ void JointTrajectoryActionController::controllerStateCB(const control_msgs::Foll
     return;
   }
 
-  if (!setsEqual(joint_names_, msg->joint_names))
+  if (!setsEqual(joint_names_, msg->name))
   {
     ROS_ERROR_ONCE("Joint names from the controller don't match our joint names.");
     return;
@@ -221,22 +230,19 @@ void JointTrajectoryActionController::controllerStateCB(const control_msgs::Foll
   {
     // Checks that we have ended inside the goal constraints
     bool inside_goal_constraints = true;
-    for (size_t i = 0; i < msg->joint_names.size() && inside_goal_constraints; ++i)
+    if (inside_goal_constraints)
     {
       // computing error from goal pose
-      double abs_error = fabs(msg->actual.positions[i] - current_traj_.points[last].positions[i]);
-      double goal_constraint = goal_constraints_[msg->joint_names[i]];
+      double abs_error = fabs(msg->position[actual] - current_traj_.points[last].positions[0]);
+      double goal_constraint = goal_constraints_[msg->name[actual]];
       if (goal_constraint >= 0 && abs_error > goal_constraint)
         inside_goal_constraints = false;
       // It's important to be stopped if that's desired.
-      if (!(msg->desired.velocities.empty()) && (fabs(msg->desired.velocities[i]) < 1e-6))
+      if (!(msg->velocity.empty()) && (fabs(msg->velocity[actual]) < 1e-6))
       {
-        if (fabs(msg->actual.velocities[i]) > stopped_velocity_tolerance_)
+        if (fabs(msg->velocity[actual]) > stopped_velocity_tolerance_)
           inside_goal_constraints = false;
       }
-    }
-    if (inside_goal_constraints)
-    {
       active_goal_.setSucceeded();
       has_active_goal_ = false;
       first_fb_ = true;
@@ -256,7 +262,7 @@ void JointTrajectoryActionController::controllerStateCB(const control_msgs::Foll
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "follow_joint_trajecotry_action_server");
+  ros::init(argc, argv, "follow_joint_trajectory_action_server_with_torso");
   ros::NodeHandle node;
 
   // Retrieve the (non-option) argument:
