@@ -22,9 +22,14 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
 
   ros::NodeHandle pn("~");
 
-  joint_names_.resize(1);
+  int arm_joint_num = robot_type[3] - '0';
+  joint_names_.resize(arm_joint_num + 1);
 
-  joint_names_[0] = "torso_slider_joint";
+  joint_names_[joint_names_.size()] = "torso_slider_joint";
+  for (uint i = 0; i < joint_names_.size() - 1; i++)
+  {
+    joint_names_[i] = robot_name + "_joint_" + boost::lexical_cast<std::string>(i + 1);
+  }
 
   pn.param("constraints/goal_time", goal_time_constraint_, 0.0);
   // Gets the constraints for each joint.
@@ -41,7 +46,10 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
   pn.param("constraints/stopped_velocity_tolerance", stopped_velocity_tolerance_, 0.01);
 
   pub_controller_command_ = nh_.advertise<trajectory_msgs::JointTrajectory>("torso_controllers/joint_trajectory", 1);
-  sub_controller_state_ = nh_.subscribe("joint_states", 10, &JointTrajectoryActionController::controllerStateCB, this);
+  // sub_controller_state_torso_ =
+  //    nh_.subscribe("joint_states", 10, &JointTrajectoryActionController::torsoControllerStateCB, this);
+  sub_controller_state_arm_ = nh_.subscribe(robot_name + "_driver/trajectory_controller/state", 1,
+                                            &JointTrajectoryActionController::armControllerStateCB, this);
   watchdog_timer_ = nh_.createTimer(ros::Duration(1.0), &JointTrajectoryActionController::watchdog, this);
 
   ros::Time started_waiting_for_controller = ros::Time::now();
@@ -52,7 +60,7 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
         ros::Time::now() > started_waiting_for_controller + ros::Duration(30.0))
     {
       ROS_WARN("Waited for the controller for 30 seconds, but it never showed up. Continue waiting the feedback of "
-               "trajectory state on topic /rb1/joint_states ...");
+               "trajectory state on topic /rb1/joint_states & /rb1/trajectory_controller/state ...");
       started_waiting_for_controller = ros::Time(0);
     }
     ros::WallDuration(0.1).sleep();
@@ -66,7 +74,8 @@ JointTrajectoryActionController::JointTrajectoryActionController(ros::NodeHandle
 JointTrajectoryActionController::~JointTrajectoryActionController()
 {
   pub_controller_command_.shutdown();
-  sub_controller_state_.shutdown();
+  // sub_controller_state_torso_.shutdown();
+  sub_controller_state_arm_.shutdown();
   watchdog_timer_.stop();
 }
 
@@ -130,6 +139,11 @@ void JointTrajectoryActionController::goalCBFollow(FJTAS::GoalHandle gh)
   // Ensures that the joints in the goal match the joints we are commanding.
   if (!setsEqual(joint_names_, gh.getGoal()->trajectory.joint_names))
   {
+    for (int i = 0; i < joint_names_.size(); i++)
+    {
+      ROS_ERROR("%s %s", joint_names_[i].c_str(), gh.getGoal()->trajectory.joint_names[i].c_str());
+    }
+
     ROS_ERROR("Joints on incoming goal don't match our joints");
     gh.setRejected();
     return;
@@ -175,27 +189,36 @@ void JointTrajectoryActionController::cancelCBFollow(FJTAS::GoalHandle gh)
   }
 }
 
-void JointTrajectoryActionController::controllerStateCB(const sensor_msgs::JointStateConstPtr& msg)
+void JointTrajectoryActionController::torsoControllerStateCB(const sensor_msgs::JointStateConstPtr& msg)
 {
   ROS_INFO_ONCE("Joint_trajectory_action_server_with_torso receive feedback of trajectory state from topic: "
                 "/rb1/joint_states");
-
-  int actual;
-  bool found = false;
 
   for (int i = 0; i < msg->name.size(); i++)
   {
     if (msg->name[i] == "torso_slider_joint")
     {
-      actual = i;
-      last_controller_state_ = msg;
-      found = true;
-      break;
+      last_controller_state_torso_ = sensor_msgs::JointState();
+      last_controller_state_torso_.effort.resize(1);
+      last_controller_state_torso_.name.resize(1);
+      last_controller_state_torso_.position.resize(1);
+      last_controller_state_torso_.velocity.resize(1);
+      last_controller_state_torso_.header = msg->header;
+      last_controller_state_torso_.effort[0] = msg->effort[i];
+      last_controller_state_torso_.name[0] = msg->name[i];
+      last_controller_state_torso_.position[0] = msg->position[i];
+      last_controller_state_torso_.velocity[0] = msg->velocity[i];
     }
   }
+}
 
-  if (!found)
-    return;
+void JointTrajectoryActionController::armControllerStateCB(
+    const control_msgs::FollowJointTrajectoryFeedbackConstPtr& msg)
+{
+  ROS_INFO_ONCE("Joint_trajectory_action_server receive feedback of trajectory state from topic: "
+                "/trajectory_controller/state");
+
+  last_controller_state_ = msg;
 
   ros::Time now = ros::Time::now();
 
@@ -217,7 +240,7 @@ void JointTrajectoryActionController::controllerStateCB(const sensor_msgs::Joint
     return;
   }
 
-  if (!setsEqual(joint_names_, msg->name))
+  if (!setsEqual(joint_names_, msg->joint_names))
   {
     ROS_ERROR_ONCE("Joint names from the controller don't match our joint names.");
     return;
@@ -230,19 +253,22 @@ void JointTrajectoryActionController::controllerStateCB(const sensor_msgs::Joint
   {
     // Checks that we have ended inside the goal constraints
     bool inside_goal_constraints = true;
-    if (inside_goal_constraints)
+    for (size_t i = 0; i < msg->joint_names.size() && inside_goal_constraints; ++i)
     {
       // computing error from goal pose
-      double abs_error = fabs(msg->position[actual] - current_traj_.points[last].positions[0]);
-      double goal_constraint = goal_constraints_[msg->name[actual]];
-      if (goal_constraint >= 0 && abs_error > goal_constraint)
+      double abs_error = fabs(msg->actual.positions[i] - current_traj_.points[last].positions[i]);
+      double goal_constraint = goal_constraints_[msg->joint_names[i]];
+      if (goal_constraint >= 0 && abs_error > goal_constraint && i < msg->joint_names.size() - 1)
         inside_goal_constraints = false;
       // It's important to be stopped if that's desired.
-      if (!(msg->velocity.empty()) && (fabs(msg->velocity[actual]) < 1e-6))
+      if (!(msg->desired.velocities.empty()) && (fabs(msg->desired.velocities[i]) < 1e-6))
       {
-        if (fabs(msg->velocity[actual]) > stopped_velocity_tolerance_)
+        if (fabs(msg->actual.velocities[i]) > stopped_velocity_tolerance_ && i < msg->joint_names.size() - 1)
           inside_goal_constraints = false;
       }
+    }
+    if (inside_goal_constraints)
+    {
       active_goal_.setSucceeded();
       has_active_goal_ = false;
       first_fb_ = true;

@@ -23,7 +23,8 @@ private:
   boost::shared_ptr<FJTAS> action_server_follow_;
 
   ros::Publisher pub_controller_command_;
-  ros::Subscriber sub_controller_state_;
+  ros::Subscriber sub_controller_state_torso_;
+  ros::Subscriber sub_controller_state_arm_;
   ros::Timer watchdog_timer_;
 
   bool has_active_goal_;
@@ -31,7 +32,8 @@ private:
   ros::Time start_time_;
   FJTAS::GoalHandle active_goal_;
   trajectory_msgs::JointTrajectory current_traj_;
-  sensor_msgs::JointStateConstPtr last_controller_state_;
+  sensor_msgs::JointState last_controller_state_torso_;
+  control_msgs::FollowJointTrajectoryFeedbackConstPtr last_controller_state_;
 
   std::vector<std::string> joint_names_;
   std::map<std::string, double> goal_constraints_;
@@ -41,7 +43,8 @@ private:
 
   void goalCBFollow(FJTAS::GoalHandle gh);
   void cancelCBFollow(FJTAS::GoalHandle gh);
-  void controllerStateCB(const sensor_msgs::JointStateConstPtr& msg);
+  void torsoControllerStateCB(const sensor_msgs::JointStateConstPtr& msg);
+  void armControllerStateCB(const control_msgs::FollowJointTrajectoryFeedbackConstPtr& msg);
   void watchdog(const ros::TimerEvent& e);
 };
 }  // namespace kinova
