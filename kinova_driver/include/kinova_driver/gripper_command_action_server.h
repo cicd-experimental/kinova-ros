@@ -38,6 +38,7 @@ namespace kinova
 
         double finger_max_turn_ ; // maximum turn (KinovaFinger defalt unit) value
         double finger_conv_ratio_; // finger value convert ratio defined in kinova_driver/kinova_arm
+        int finger_number_; //number of fingers (default 3)
 
         void goalCBFollow(GCAS::GoalHandle gh);
         void cancelCBFollow(GCAS::GoalHandle gh);

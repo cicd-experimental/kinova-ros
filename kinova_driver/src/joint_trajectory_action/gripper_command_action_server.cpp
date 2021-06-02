@@ -22,11 +22,12 @@ GripperCommandActionController::GripperCommandActionController(ros::NodeHandle &
 
     ros::NodeHandle pn("~");
     // unit of GripperCommand is meter. Gripper_command_goal from "moveit.rviz" is in unit of radians.
-    nh_.param("gripper_command_goal_constraint_", gripper_command_goal_constraint_, 0.01);
-    nh_.param("finger_max_turn_", finger_max_turn_, 6400.0);
-    nh_.param("finger_conv_ratio_", finger_conv_ratio_, 1.4 / 6400.0);
-
-    gripper_joint_num_ = 3;
+    pn.param("gripper_command_goal_constraint_", gripper_command_goal_constraint_, 0.01);
+    pn.param("finger_max_turn_", finger_max_turn_, 6400.0);
+    pn.param("finger_conv_ratio_", finger_conv_ratio_, 1.31 / 6400.0);
+    pn.param("finger_number_", finger_number_, 3);
+    
+    gripper_joint_num_ = finger_number_;
     gripper_joint_names_.resize(gripper_joint_num_);
 
     for (uint i = 0; i<gripper_joint_names_.size(); i++)
@@ -149,11 +150,14 @@ void GripperCommandActionController::controllerStateCB(const kinova_msgs::Finger
     double abs_error2 = fabs(active_goal_.getGoal()->command.position - msg->finger2 * finger_conv_ratio_);
     double abs_error3 = fabs(active_goal_.getGoal()->command.position - msg->finger3 * finger_conv_ratio_);
 
-    if (abs_error1<gripper_command_goal_constraint_  && abs_error2<gripper_command_goal_constraint_ && abs_error3<gripper_command_goal_constraint_)
-    {
-        ROS_INFO("Gripper command goal succeeded!");
-        active_goal_.setSucceeded();
-        has_active_goal_ = false;
+
+    if (abs_error1<gripper_command_goal_constraint_  && abs_error2<gripper_command_goal_constraint_)
+    {  
+        if (gripper_joint_num_ == 2 || (gripper_joint_num_ == 3 && (abs_error3<gripper_command_goal_constraint_))){ 
+            ROS_INFO("Gripper command goal succeeded!");
+            active_goal_.setSucceeded();
+            has_active_goal_ = false;
+        } 
     }
 }
 
