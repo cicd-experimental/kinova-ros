@@ -6,7 +6,7 @@
 
   <arg name="config" default="false" />
   <arg unless="$(arg config)" name="command_args" value="" />
-  <arg     if="$(arg config)" name="command_args" value="-d $(find moveit_grasps)/launch/rviz/grasps.rviz" />
+  <arg     if="$(arg config)" name="command_args" value="-d $(find j2s6s200_moveit_config)/launch/moveit.rviz" />
 
     <!-- Publish world frame -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="virtual_joint_broadcaster_1" args="0 0 0 0 0 0 world root" />
