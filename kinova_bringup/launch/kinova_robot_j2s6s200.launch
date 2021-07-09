@@ -35,4 +35,7 @@
     </node>
   </group>
 
+  <!-- rosrun tf tf_echo j2s6s200_link_5 j2s6s200_wrist_rgbd_base_link -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="realsense_mount" args="0.053, 0.140, 0.030, 0.469, 0.538, 0.505, 0.486 j2s6s200_link_5 camera_link"/> 
+
 </launch>
