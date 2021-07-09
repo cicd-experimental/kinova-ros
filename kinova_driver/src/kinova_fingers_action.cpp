@@ -151,18 +151,21 @@ void KinovaFingersActionServer::actionCallback(const kinova_msgs::SetFingersPosi
             {
                 // Check if the full stall condition has been meet
                 result.fingers = current_finger_positions.constructFingersMsg();
- 		if (!arm_comm_.isStopped())
+/*  		if (!arm_comm_.isStopped())
                 {
                 	arm_comm_.stopAPI();
                 	arm_comm_.startAPI();
-		}
+		} */
 		//why preemted, if the robot is stalled, trajectory/action failed!
                 /*
                 action_server_.setPreempted(result);
                 ROS_WARN_STREAM(__PRETTY_FUNCTION__ << ": LINE " << __LINE__ << ", setPreempted ");
                 */
-                action_server_.setAborted(result);
+                /* action_server_.setAborted(result);
                 ROS_DEBUG_STREAM(__PRETTY_FUNCTION__ << ": LINE " << __LINE__ << ", Trajectory command failed ");
+                return; */
+                action_server_.setSucceeded(result);
+                ROS_DEBUG_STREAM(__PRETTY_FUNCTION__ << ": LINE " << __LINE__ << ", Fingers closed with maximum allowed position : setSucceeded ");
                 return;
             }
 
