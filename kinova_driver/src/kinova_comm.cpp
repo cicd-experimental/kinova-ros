@@ -1154,6 +1154,77 @@ void KinovaComm::setCartesianVelocitiesWithFingers(const CartesianInfo &velociti
     }
 }
 
+/**
+ * @brief Finger velocity control 
+ * This function sends trajectory point(CARTESIAN_VELOCITY) that will be added in the robotical arm's FIFO. Cartesian velocity will be 0 while fingers are moving.  
+ * @param fingers finger velocities, unit should be steps/second (tested it, seems to be slower than that)
+ */
+void KinovaComm::setFingerVelocity(const FingerAngles& fingers)
+{
+    boost::recursive_mutex::scoped_lock lock(api_mutex_);
+
+    if (isStopped())
+    {
+        ROS_INFO("The finger velocities could not be set because the arm is stopped");
+        kinova_api_.eraseAllTrajectories();
+        return;
+    }
+
+    TrajectoryPoint kinova_velocity;
+    kinova_velocity.InitStruct();
+
+    memset(&kinova_velocity, 0, sizeof(kinova_velocity));  // zero structure
+
+    //startAPI();
+    kinova_velocity.Position.Type = ANGULAR_VELOCITY;
+
+/*     // confusingly, velocity is passed in the position struct
+    kinova_velocity.Position.CartesianPosition = velocities; */
+
+    // Fill fingers
+    kinova_velocity.Position.Fingers = fingers;
+    kinova_velocity.Position.HandMode = VELOCITY_MODE;
+
+    int result = kinova_api_.sendAdvanceTrajectory(kinova_velocity);
+    if (result != NO_ERROR_KINOVA)
+    {
+        throw KinovaCommException("Could not send advanced Finger velocity trajectory", result);
+    }
+}
+
+void KinovaComm::setJointVelocitiesWithFingerVelocity(const AngularInfo &joint_vel, const FingerAngles& fingers)
+{
+    boost::recursive_mutex::scoped_lock lock(api_mutex_);
+
+    if (isStopped())
+    {
+        ROS_INFO("The joint velocities and finger velocities could not be set because the arm is stopped");
+        kinova_api_.eraseAllTrajectories();
+        return;
+    }
+
+    TrajectoryPoint kinova_velocity;
+    kinova_velocity.InitStruct();
+
+    memset(&kinova_velocity, 0, sizeof(kinova_velocity));  // zero structure
+
+    //startAPI();
+    kinova_velocity.Position.Type = ANGULAR_VELOCITY;
+
+    // confusingly, velocity is passed in the position struct
+    kinova_velocity.Position.Actuators = joint_vel;
+
+    // Fill fingers
+    kinova_velocity.Position.Fingers = fingers;
+    kinova_velocity.Position.HandMode = VELOCITY_MODE;
+
+    int result = kinova_api_.sendAdvanceTrajectory(kinova_velocity);
+    if (result != NO_ERROR_KINOVA)
+    {
+        throw KinovaCommException("Could not send advanced Cartesian velocity trajectory", result);
+    }
+}
+
 
 /**
  * @brief This function returns the max translation(X, Y and Z) velocity of the robot's end effector in ClientConfigurations

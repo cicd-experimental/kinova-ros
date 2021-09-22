@@ -12,6 +12,7 @@
 #include <kinova_driver/kinova_ros_types.h>
 
 
+
 namespace
 {
     /// \brief Convert Kinova-specific angle degree variations (0..180, 360-181) to
@@ -212,6 +213,10 @@ KinovaArm::KinovaArm(KinovaComm &arm, const ros::NodeHandle &nodeHandle, const s
                                  &KinovaArm::jointVelocityCallback, this);
     cartesian_velocity_subscriber_ = node_handle_.subscribe("in/cartesian_velocity", 1,
                                      &KinovaArm::cartesianVelocityCallback, this);
+	finger_velocity_subscriber_ = node_handle_.subscribe("in/finger_velocity", 1,
+                                     &KinovaArm::fingerVelocityCallback, this);  
+    joint_velocity_with_finger_velocity_subscriber_ = node_handle_.subscribe("in/joint_velocity_with_finger_velocity", 1,
+                                     &KinovaArm::jointVelocityWithFingerVelocityCallback, this);                                                                    
     cartesian_velocity_with_fingers_subscriber_ = node_handle_.subscribe("in/cartesian_velocity_with_fingers", 1,
                                      &KinovaArm::cartesianVelocityWithFingersCallback, this);                                     
     joint_torque_subscriber_ = node_handle_.subscribe("in/joint_torque", 1,
@@ -522,6 +527,43 @@ void KinovaArm::cartesianVelocityWithFingersCallback(const kinova_msgs::PoseVelo
 
         // orientation velocity of cartesian_velocities_ is based on twist.angular
         kinova_comm_.setCartesianVelocitiesWithFingers(cartesian_velocities_, fingers);
+    }
+}
+
+void KinovaArm::fingerVelocityCallback(const std_msgs::Float32& finger_velocity)
+{
+    if (!kinova_comm_.isStopped())
+    {
+        FingerAngles fingers;
+        fingers.Finger1 = finger_velocity.data;
+        fingers.Finger2 = finger_velocity.data;
+        fingers.Finger3 = finger_velocity.data;
+
+        // orientation velocity of cartesian_velocities_ is based on twist.angular
+        kinova_comm_.setFingerVelocity(fingers);
+    }
+}
+
+
+void KinovaArm::jointVelocityWithFingerVelocityCallback(const kinova_msgs::JointVelocityWithFingerVelocityConstPtr& joint_vel_with_finger_velocity)
+{
+    if (!kinova_comm_.isStopped())
+    {
+        joint_velocities_.Actuator1 = joint_vel_with_finger_velocity->joint1;
+        joint_velocities_.Actuator2 = joint_vel_with_finger_velocity->joint2;
+        joint_velocities_.Actuator3 = joint_vel_with_finger_velocity->joint3;
+        joint_velocities_.Actuator4 = joint_vel_with_finger_velocity->joint4;
+        joint_velocities_.Actuator5 = joint_vel_with_finger_velocity->joint5;
+        joint_velocities_.Actuator6 = joint_vel_with_finger_velocity->joint6;
+        joint_velocities_.Actuator7 = joint_vel_with_finger_velocity->joint7;
+
+        FingerAngles fingers;
+        fingers.Finger1 = joint_vel_with_finger_velocity->fingers;
+        fingers.Finger2 = joint_vel_with_finger_velocity->fingers;
+        fingers.Finger3 = joint_vel_with_finger_velocity->fingers;
+
+        // orientation velocity of cartesian_velocities_ is based on twist.angular
+        kinova_comm_.setJointVelocitiesWithFingerVelocity(joint_velocities_, fingers);
     }
 }
 

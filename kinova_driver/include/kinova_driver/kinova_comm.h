@@ -105,6 +105,8 @@ class KinovaComm
     void getJointTorques(KinovaAngles &tqs);
     void getJointCurrent(AngularPosition &anguler_current);    
     void printAngles(const KinovaAngles &angles);
+    void setFingerVelocity(const FingerAngles& fingers);
+    void setJointVelocitiesWithFingerVelocity(const AngularInfo& joint_vel, const FingerAngles& fingers);
 
     // %EndTag(Angular Control)%
 

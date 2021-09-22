@@ -11,6 +11,7 @@
 #define KINOVA_DRIVER_KINOVA_ARM_H
 
 #include <ros/ros.h>
+#include <std_msgs/Float32.h>
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/WrenchStamped.h>
@@ -25,6 +26,7 @@
 #include <kinova_msgs/JointVelocity.h>
 #include <kinova_msgs/PoseVelocity.h>
 #include <kinova_msgs/PoseVelocityWithFingers.h>
+#include <kinova_msgs/JointVelocityWithFingerVelocity.h>
 #include <kinova_msgs/JointTorque.h>
 #include <kinova_msgs/FingerPosition.h>
 #include <kinova_msgs/JointAngles.h>
@@ -70,6 +72,8 @@ class KinovaArm
     void jointVelocityCallback(const kinova_msgs::JointVelocityConstPtr& joint_vel);
     void cartesianVelocityCallback(const kinova_msgs::PoseVelocityConstPtr& cartesian_vel);
     void cartesianVelocityWithFingersCallback(const kinova_msgs::PoseVelocityWithFingersConstPtr& cartesian_vel_with_fingers);
+    void jointVelocityWithFingerVelocityCallback(const kinova_msgs::JointVelocityWithFingerVelocityConstPtr& joint_vel_with_fingers);
+    void fingerVelocityCallback(const std_msgs::Float32& finger_velocity);
     void jointTorqueSubscriberCallback(const kinova_msgs::JointTorqueConstPtr& joint_torque);
     void forceSubscriberCallback(const kinova_msgs::CartesianForceConstPtr& force);
 
@@ -121,6 +125,8 @@ class KinovaArm
 
     // Publishers, subscribers, services
     ros::Subscriber joint_velocity_subscriber_;
+    ros::Subscriber finger_velocity_subscriber_;
+    ros::Subscriber joint_velocity_with_finger_velocity_subscriber_;
     ros::Subscriber cartesian_velocity_subscriber_;
     ros::Subscriber cartesian_velocity_with_fingers_subscriber_;
     ros::Subscriber joint_torque_subscriber_;
