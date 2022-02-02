@@ -22,7 +22,7 @@ def argumentParser(argument):
   return prefix, nbJoints, nbfingers
 
 def moveJoint (jointcmds,prefix,nbJoints):
-  topic_name = '/' + prefix + '/effort_joint_trajectory_controller/command'
+  topic_name =  prefix + '/effort_joint_trajectory_controller/command'
   pub = rospy.Publisher(topic_name, JointTrajectory, queue_size=1)
   jointCmd = JointTrajectory()  
   point = JointTrajectoryPoint()
@@ -43,7 +43,7 @@ def moveJoint (jointcmds,prefix,nbJoints):
     rate.sleep()     
 
 def moveFingers (jointcmds,prefix,nbJoints):
-  topic_name = '/' + prefix + '/effort_finger_trajectory_controller/command'
+  topic_name =  prefix + '/effort_finger_trajectory_controller/command'
   pub = rospy.Publisher(topic_name, JointTrajectory, queue_size=1)  
   jointCmd = JointTrajectory()  
   point = JointTrajectoryPoint()
@@ -77,9 +77,9 @@ if __name__ == '__main__':
 
     if (nbJoints==6):
       #home robots
-      moveJoint ([0.0,2.9,1.3,4.2,1.4,0.0],prefix,nbJoints)
+      moveJoint ([-1.64,2.83,0.58,-0.05,3.99,-0.04],prefix,nbJoints)
     else:
-      moveJoint ([0.0,2.9,0.0,1.3,4.2,1.4,0.0],prefix,nbJoints)
+      moveJoint ([-1.64,2.83,0.58,-0.05,3.99,-0.04,0.0],prefix,nbJoints)
 
     moveFingers ([1,1,1],prefix,nbfingers)
   except rospy.ROSInterruptException:
