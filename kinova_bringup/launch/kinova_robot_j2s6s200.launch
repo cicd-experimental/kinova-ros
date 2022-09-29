@@ -27,7 +27,7 @@
   </group>
 
   <group if="$(arg use_urdf)">
-    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find intrepid_robot_description)/urdf/robots/$(arg kinova_robotType)_standalone.xacro'" />
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find intrepid_description)/urdf/robots/$(arg kinova_robotType)_standalone.xacro'" />
     <node name="$(arg kinova_robotName)_state_publisher"
            pkg="robot_state_publisher"
           type="robot_state_publisher">
@@ -36,6 +36,11 @@
   </group>
 
   <!-- rosrun tf tf_echo j2s6s200_link_5 j2s6s200_wrist_rgbd_base_link -->
-  <node pkg="tf2_ros" type="static_transform_publisher" name="realsense_mount" args="0.053, 0.140, 0.030, 0.469, 0.538, 0.505, 0.486 j2s6s200_link_5 camera_link"/> 
+  <!--node pkg="tf2_ros" type="static_transform_publisher" name="realsense_mount" args="0.053, 0.140, 0.030, 0.469, 0.538, 0.505, 0.486 j2s6s200_link_5 camera_link"/--> 
+ <!--node pkg="tf2_ros" type="static_transform_publisher" name="realsense_mount" args="0.039 0.130 0.009, 0.503, 0.514, 0.500, 0.482 j2s6s200_link_5 camera_link"/-->
+ <!--node pkg="tf2_ros" type="static_transform_publisher" name="realsense_mount" args="0.025, 0.140, 0.030, 0.500242, 0.490945, 0.492448, 0.515971 j2s6s200_link_5 camera_link"/--> 
+ <!--node pkg="tf2_ros" type="static_transform_publisher" name="realsense_mount" args="0.0309258, 0.140, 0.030, 0.514781, 0.501392, 0.499091, 0.484266 j2s6s200_link_5 camera_link"/-->
+<!--node pkg="tf2_ros" type="static_transform_publisher" name="realsense_mount" args="0.0386453, 0.12, 0.009, 0.492, 0.514, 0.503, 0.491 j2s6s200_link_5 camera_link"/-->
+<node pkg="tf2_ros" type="static_transform_publisher" name="realsense_mount" args="0.0416228, 0.10, 0.009, 0.50761, 0.506256, 0.492938, 0.493 j2s6s200_link_5 camera_link"/>
 
 </launch>
