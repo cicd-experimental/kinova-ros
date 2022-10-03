@@ -23,7 +23,7 @@ GripperCommandActionController::GripperCommandActionController(ros::NodeHandle &
     ros::NodeHandle pn("~");
     // unit of GripperCommand is meter. Gripper_command_goal from "moveit.rviz" is in unit of radians.
     pn.param("gripper_command_goal_constraint_", gripper_command_goal_constraint_, 1.0);
-    pn.param("finger_max_turn_", finger_max_turn_, 6400.0);
+    pn.param("finger_max_turn_", finger_max_turn_, 8000.0);
     pn.param("finger_conv_ratio_", finger_conv_ratio_, 1.31 / 6400.0);
     pn.param("finger_number_", finger_number_, 3);
     
